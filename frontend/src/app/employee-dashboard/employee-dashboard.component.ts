@@ -55,9 +55,9 @@ import { AuthService } from '../services/auth.service';
             <div class="checkin-time">
               <p class="time-label">上班打卡</p>
               <p class="time-value" [class.late]="isCheckInLate">
-                {{ todayAttendance?.check_in_time ? formatTime(todayAttendance.check_in_time) : '--:--:--' }}
+                {{ formatTime(todayAttendance?.check_in_time) }}
               </p>
-              <p *ngIf="todayAttendance?.check_in_status" 
+              <p *ngIf="todayAttendance && todayAttendance.check_in_status" 
                  class="status-badge"
                  [class.status-normal]="todayAttendance.check_in_status === 'normal'"
                  [class.status-late]="todayAttendance.check_in_status === 'late'"
@@ -82,9 +82,9 @@ import { AuthService } from '../services/auth.service';
             <div class="checkin-time">
               <p class="time-label">下班打卡</p>
               <p class="time-value" [class.early]="isCheckOutEarly">
-                {{ todayAttendance?.check_out_time ? formatTime(todayAttendance.check_out_time) : '--:--:--' }}
+                {{ formatTime(todayAttendance?.check_out_time) }}
               </p>
-              <p *ngIf="todayAttendance?.check_out_status" 
+              <p *ngIf="todayAttendance && todayAttendance.check_out_status" 
                  class="status-badge"
                  [class.status-normal]="todayAttendance.check_out_status === 'normal'"
                  [class.status-early]="todayAttendance.check_out_status === 'early_leave'">
@@ -613,16 +613,17 @@ export class EmployeeDashboardComponent implements OnInit {
     const record = this.attendanceRecords.find(r => r.date === dateStr);
     
     if (!record) return '';
-    return record.overall_status;
+    return record.overall_status || '';
   }
 
-  formatTime(timeStr: string): string {
+  formatTime(timeStr: string | null | undefined): string {
     if (!timeStr) return '--:--:--';
     const date = new Date(timeStr);
     return date.toLocaleTimeString('zh-CN', { hour12: false });
   }
 
-  getStatusLabel(status: string): string {
+  getStatusLabel(status: string | null | undefined): string {
+    if (!status) return '';
     const labels: Record<string, string> = {
       'normal': '正常',
       'late': '迟到',

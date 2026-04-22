@@ -4,14 +4,13 @@ WORKDIR /app
 
 RUN apk add --no-cache git
 
-COPY go.mod go.sum ./
-RUN go mod download
-
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o main .
+RUN go mod tidy
 
-FROM alpine:latest
+RUN CGO_ENABLED=0 go build -o main .
+
+FROM alpine:3.19
 
 WORKDIR /app
 

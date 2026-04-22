@@ -7,8 +7,6 @@ import (
 
 	"attendance/config"
 	"attendance/models"
-
-	"gorm.io/gorm"
 )
 
 func SeedDatabase() {
