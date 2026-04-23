@@ -3,6 +3,8 @@ package models
 import (
 	"time"
 
+	"attendance/utils"
+
 	"gorm.io/gorm"
 )
 
@@ -48,8 +50,8 @@ func (a *Attendance) CalculateStatus() {
 
 	// Check in status
 	if a.CheckInTime != nil {
-		checkInHour := a.CheckInTime.Hour()
-		checkInMinute := a.CheckInTime.Minute()
+		checkInHour := utils.GetChinaHour(*a.CheckInTime)
+		checkInMinute := utils.GetChinaMinute(*a.CheckInTime)
 		
 		if checkInHour > workStartHour || (checkInHour == workStartHour && checkInMinute > 0) {
 			lateMinutes := (checkInHour - workStartHour) * 60 + checkInMinute
@@ -65,8 +67,8 @@ func (a *Attendance) CalculateStatus() {
 
 	// Check out status
 	if a.CheckOutTime != nil {
-		checkOutHour := a.CheckOutTime.Hour()
-		checkOutMinute := a.CheckOutTime.Minute()
+		checkOutHour := utils.GetChinaHour(*a.CheckOutTime)
+		checkOutMinute := utils.GetChinaMinute(*a.CheckOutTime)
 		
 		if checkOutHour < workEndHour || (checkOutHour == workEndHour && checkOutMinute < 0) {
 			a.CheckOutStatus = StatusEarlyLeave

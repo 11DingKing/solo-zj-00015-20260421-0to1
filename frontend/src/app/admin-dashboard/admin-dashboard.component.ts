@@ -403,8 +403,17 @@ export class AdminDashboardComponent implements OnInit {
 
   formatTime(timeStr: string | null): string {
     if (!timeStr) return '--:--:--';
-    const date = new Date(timeStr);
-    return date.toLocaleTimeString('zh-CN', { hour12: false });
+    if (timeStr.length === 8 && timeStr.includes(':')) {
+      return timeStr;
+    }
+    if (timeStr.includes('T')) {
+      const date = new Date(timeStr);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const seconds = date.getSeconds().toString().padStart(2, '0');
+      return `${hours}:${minutes}:${seconds}`;
+    }
+    return timeStr;
   }
 
   getStatusLabel(status: string): string {

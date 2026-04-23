@@ -7,6 +7,7 @@ import (
 
 	"attendance/config"
 	"attendance/models"
+	"attendance/utils"
 )
 
 func SeedDatabase() {
@@ -48,7 +49,7 @@ func SeedDatabase() {
 }
 
 func generateAttendanceHistory(userID uint) {
-	now := time.Now()
+	now := utils.Now()
 	startDate := now.AddDate(0, -1, 0)
 
 	for d := startDate; d.Before(now); d = d.AddDate(0, 0, 1) {
@@ -56,7 +57,7 @@ func generateAttendanceHistory(userID uint) {
 			continue
 		}
 
-		dateStr := d.Format("2006-01-02")
+		dateStr := utils.FormatDate(d)
 
 		attendance := &models.Attendance{
 			UserID: userID,
@@ -70,30 +71,35 @@ func generateAttendanceHistory(userID uint) {
 			continue
 		}
 
-		checkInHour := 8 + rand.Intn(3)
-		checkInMinute := rand.Intn(60)
-		if checkInHour == 8 {
-			checkInMinute = rand.Intn(30) + 30
+		checkInHour := 8
+		checkInMinute := 30 + rand.Intn(60)
+		
+		lateChance := rand.Intn(100)
+		if lateChance < 20 {
+			checkInHour = 9
+			checkInMinute = 5 + rand.Intn(30)
+		} else if lateChance < 25 {
+			checkInHour = 9
+			checkInMinute = 35 + rand.Intn(30)
 		}
 
-		checkInTime := time.Date(d.Year(), d.Month(), d.Day(), checkInHour, checkInMinute, 0, 0, time.Local)
+		checkInTime := utils.ChinaDate(d.Year(), d.Month(), d.Day(), checkInHour, checkInMinute, 0)
 		attendance.CheckInTime = &checkInTime
-		attendance.CheckInIP = "192.168.1." + string(rune(100+rand.Intn(100)))
+		attendance.CheckInIP = fmt.Sprintf("192.168.1.%d", 100+rand.Intn(100))
 
 		checkOutChance := rand.Intn(100)
+		var checkOutHour, checkOutMinute int
 		if checkOutChance < 10 {
-			checkOutHour := 16 + rand.Intn(2)
-			checkOutMinute := rand.Intn(60)
-			checkOutTime := time.Date(d.Year(), d.Month(), d.Day(), checkOutHour, checkOutMinute, 0, 0, time.Local)
-			attendance.CheckOutTime = &checkOutTime
-			attendance.CheckOutIP = "192.168.1." + string(rune(100+rand.Intn(100)))
+			checkOutHour = 16 + rand.Intn(2)
+			checkOutMinute = rand.Intn(60)
 		} else {
-			checkOutHour := 18 + rand.Intn(2)
-			checkOutMinute := rand.Intn(60)
-			checkOutTime := time.Date(d.Year(), d.Month(), d.Day(), checkOutHour, checkOutMinute, 0, 0, time.Local)
-			attendance.CheckOutTime = &checkOutTime
-			attendance.CheckOutIP = "192.168.1." + string(rune(100+rand.Intn(100)))
+			checkOutHour = 18 + rand.Intn(2)
+			checkOutMinute = rand.Intn(60)
 		}
+		
+		checkOutTime := utils.ChinaDate(d.Year(), d.Month(), d.Day(), checkOutHour, checkOutMinute, 0)
+		attendance.CheckOutTime = &checkOutTime
+		attendance.CheckOutIP = fmt.Sprintf("192.168.1.%d", 100+rand.Intn(100))
 
 		attendance.CalculateStatus()
 

@@ -7,6 +7,7 @@ import (
 
 	"attendance/config"
 	"attendance/models"
+	"attendance/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,7 +33,8 @@ func CheckIn(c *gin.Context) {
 		return
 	}
 
-	today := time.Now().Format("2006-01-02")
+	now := utils.Now()
+	today := utils.FormatDate(now)
 	clientIP := c.ClientIP()
 
 	var attendance models.Attendance
@@ -44,8 +46,6 @@ func CheckIn(c *gin.Context) {
 			Date:   today,
 		}
 	}
-
-	now := time.Now()
 
 	if req.Type == models.CheckInTypeMorning {
 		if attendance.CheckInTime != nil {
@@ -79,14 +79,16 @@ func CheckIn(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":    fmt.Sprintf("%s check-in successful", req.Type),
-		"attendance": attendance,
+		"message":         fmt.Sprintf("%s check-in successful", req.Type),
+		"attendance":      attendance,
+		"check_in_time":   formatTimeStr(attendance.CheckInTime),
+		"check_out_time":  formatTimeStr(attendance.CheckOutTime),
 	})
 }
 
 func GetTodayAttendance(c *gin.Context) {
 	userID := c.GetUint("user_id")
-	today := time.Now().Format("2006-01-02")
+	today := utils.FormatDate(utils.Now())
 
 	var attendance models.Attendance
 	result := config.DB.Where("user_id = ? AND date = ?", userID, today).First(&attendance)
@@ -99,7 +101,18 @@ func GetTodayAttendance(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, attendance)
+	c.JSON(http.StatusOK, gin.H{
+		"id":               attendance.ID,
+		"user_id":          attendance.UserID,
+		"date":             attendance.Date,
+		"check_in_time":    formatTimeStr(attendance.CheckInTime),
+		"check_in_ip":      attendance.CheckInIP,
+		"check_in_status":  attendance.CheckInStatus,
+		"check_out_time":   formatTimeStr(attendance.CheckOutTime),
+		"check_out_ip":     attendance.CheckOutIP,
+		"check_out_status": attendance.CheckOutStatus,
+		"overall_status":   attendance.OverallStatus,
+	})
 }
 
 func GetMyAttendanceRecords(c *gin.Context) {
@@ -119,12 +132,17 @@ func GetMyAttendanceRecords(c *gin.Context) {
 	var attendances []models.Attendance
 	query.Order("date DESC").Find(&attendances)
 
-	c.JSON(http.StatusOK, attendances)
+	result := make([]map[string]interface{}, 0)
+	for _, a := range attendances {
+		result = append(result, formatAttendance(a))
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 func GetMyMonthlyStats(c *gin.Context) {
 	userID := c.GetUint("user_id")
-	now := time.Now()
+	now := utils.Now()
 	year, month, _ := now.Date()
 
 	startDate := fmt.Sprintf("%d-%02d-01", year, month)
@@ -158,5 +176,28 @@ func GetMyMonthlyStats(c *gin.Context) {
 }
 
 func daysInMonth(year int, month time.Month) int {
-	return time.Date(year, month+1, 0, 0, 0, 0, 0, time.Local).Day()
+	return time.Date(year, month+1, 0, 0, 0, 0, 0, utils.ChinaLocation).Day()
+}
+
+func formatTimeStr(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return utils.FormatTime(*t)
+}
+
+func formatAttendance(a models.Attendance) map[string]interface{} {
+	return map[string]interface{}{
+		"id":               a.ID,
+		"user_id":          a.UserID,
+		"date":             a.Date,
+		"check_in_time":    formatTimeStr(a.CheckInTime),
+		"check_in_ip":      a.CheckInIP,
+		"check_in_status":  a.CheckInStatus,
+		"check_out_time":   formatTimeStr(a.CheckOutTime),
+		"check_out_ip":     a.CheckOutIP,
+		"check_out_status": a.CheckOutStatus,
+		"overall_status":   a.OverallStatus,
+		"created_at":       utils.FormatDateTime(a.CreatedAt),
+	}
 }

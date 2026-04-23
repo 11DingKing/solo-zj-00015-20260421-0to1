@@ -7,6 +7,7 @@ import (
 
 	"attendance/config"
 	"attendance/models"
+	"attendance/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,7 +33,19 @@ func GetAllAttendanceRecords(c *gin.Context) {
 	var attendances []models.Attendance
 	query.Order("date DESC").Find(&attendances)
 
-	c.JSON(http.StatusOK, attendances)
+	result := make([]map[string]interface{}, 0)
+	for _, a := range attendances {
+		item := formatAttendance(a)
+		item["user"] = map[string]interface{}{
+			"id":       a.User.ID,
+			"username": a.User.Username,
+			"name":     a.User.Name,
+			"role":     a.User.Role,
+		}
+		result = append(result, item)
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 func GetAllEmployees(c *gin.Context) {
@@ -42,7 +55,7 @@ func GetAllEmployees(c *gin.Context) {
 }
 
 func ExportMonthlySummary(c *gin.Context) {
-	now := time.Now()
+	now := utils.Now()
 	year := now.Year()
 	month := int(now.Month())
 
@@ -64,15 +77,15 @@ func ExportMonthlySummary(c *gin.Context) {
 		Find(&attendances)
 
 	type EmployeeSummary struct {
-		EmployeeID   uint                `json:"employee_id"`
-		EmployeeName string              `json:"employee_name"`
-		TotalDays    int                 `json:"total_days"`
-		PresentDays  int                 `json:"present_days"`
-		LateDays     int                 `json:"late_days"`
-		SevereLate   int                 `json:"severe_late_days"`
-		EarlyLeave   int                 `json:"early_leave_days"`
-		AbsentDays   int                 `json:"absent_days"`
-		DailyRecords []models.Attendance `json:"daily_records"`
+		EmployeeID   uint                   `json:"employee_id"`
+		EmployeeName string                 `json:"employee_name"`
+		TotalDays    int                    `json:"total_days"`
+		PresentDays  int                    `json:"present_days"`
+		LateDays     int                    `json:"late_days"`
+		SevereLate   int                    `json:"severe_late_days"`
+		EarlyLeave   int                    `json:"early_leave_days"`
+		AbsentDays   int                    `json:"absent_days"`
+		DailyRecords []map[string]interface{} `json:"daily_records"`
 	}
 
 	employeeMap := make(map[uint]*EmployeeSummary)
@@ -87,13 +100,13 @@ func ExportMonthlySummary(c *gin.Context) {
 			summary = &EmployeeSummary{
 				EmployeeID:   a.UserID,
 				EmployeeName: a.User.Name,
-				DailyRecords: []models.Attendance{},
+				DailyRecords: []map[string]interface{}{},
 			}
 			employeeMap[a.UserID] = summary
 		}
 
 		summary.TotalDays++
-		summary.DailyRecords = append(summary.DailyRecords, a)
+		summary.DailyRecords = append(summary.DailyRecords, formatAttendance(a))
 
 		switch a.OverallStatus {
 		case models.StatusNormal:
@@ -119,10 +132,10 @@ func ExportMonthlySummary(c *gin.Context) {
 	}
 
 	exportData := gin.H{
-		"year":     year,
-		"month":    month,
-		"exported_at": time.Now().Format("2006-01-02 15:04:05"),
-		"employees": summaries,
+		"year":        year,
+		"month":       month,
+		"exported_at": utils.FormatDateTime(utils.Now()),
+		"employees":   summaries,
 	}
 
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=attendance_summary_%d_%02d.json", year, month))
@@ -147,5 +160,10 @@ func GetEmployeeAttendance(c *gin.Context) {
 	var attendances []models.Attendance
 	query.Order("date DESC").Find(&attendances)
 
-	c.JSON(http.StatusOK, attendances)
+	result := make([]map[string]interface{}, 0)
+	for _, a := range attendances {
+		result = append(result, formatAttendance(a))
+	}
+
+	c.JSON(http.StatusOK, result)
 }
