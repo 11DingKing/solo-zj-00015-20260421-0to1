@@ -12,6 +12,10 @@ RUN CGO_ENABLED=0 go build -o main .
 
 FROM alpine:3.19
 
+RUN apk add --no-cache tzdata
+
+ENV TZ=Asia/Shanghai
+
 WORKDIR /app
 
 COPY --from=builder /app/main .

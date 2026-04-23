@@ -609,7 +609,10 @@ export class EmployeeDashboardComponent implements OnInit {
   getDayStatus(day: Date): string {
     if (!this.isCurrentMonth(day)) return '';
     
-    const dateStr = day.toISOString().split('T')[0];
+    const year = day.getFullYear();
+    const month = String(day.getMonth() + 1).padStart(2, '0');
+    const date = String(day.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${date}`;
     const record = this.attendanceRecords.find(r => r.date === dateStr);
     
     if (!record) return '';

@@ -71,14 +71,19 @@ func generateAttendanceHistory(userID uint) {
 			continue
 		}
 
-		checkInHour := 8
-		checkInMinute := 30 + rand.Intn(60)
-		
 		lateChance := rand.Intn(100)
-		if lateChance < 20 {
+		var checkInHour, checkInMinute int
+		
+		if lateChance < 10 {
+			checkInHour = 7
+			checkInMinute = 30 + rand.Intn(30)
+		} else if lateChance < 70 {
+			checkInHour = 8
+			checkInMinute = 30 + rand.Intn(30)
+		} else if lateChance < 85 {
 			checkInHour = 9
-			checkInMinute = 5 + rand.Intn(30)
-		} else if lateChance < 25 {
+			checkInMinute = 0 + rand.Intn(30)
+		} else {
 			checkInHour = 9
 			checkInMinute = 35 + rand.Intn(30)
 		}
@@ -92,9 +97,12 @@ func generateAttendanceHistory(userID uint) {
 		if checkOutChance < 10 {
 			checkOutHour = 16 + rand.Intn(2)
 			checkOutMinute = rand.Intn(60)
+		} else if checkOutChance < 80 {
+			checkOutHour = 17
+			checkOutMinute = 30 + rand.Intn(30)
 		} else {
-			checkOutHour = 18 + rand.Intn(2)
-			checkOutMinute = rand.Intn(60)
+			checkOutHour = 18
+			checkOutMinute = 0 + rand.Intn(30)
 		}
 		
 		checkOutTime := utils.ChinaDate(d.Year(), d.Month(), d.Day(), checkOutHour, checkOutMinute, 0)

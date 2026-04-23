@@ -80,7 +80,7 @@ func CheckIn(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":         fmt.Sprintf("%s check-in successful", req.Type),
-		"attendance":      attendance,
+		"attendance":      formatAttendance(attendance),
 		"check_in_time":   formatTimeStr(attendance.CheckInTime),
 		"check_out_time":  formatTimeStr(attendance.CheckOutTime),
 	})
